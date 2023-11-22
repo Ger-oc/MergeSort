@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/csv"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -85,52 +86,43 @@ func RunMergeSort(data []int) []int {
 	return ConcurrentMergeSort(data, c)
 }
 
-func timeTrack(start time.Time, name string, operation func() []int) []int {
-	defer func() {
-		elapsed := time.Since(start)
-		log.Printf("%s took %s", name, elapsed)
-	}()
-
-	// Execute the specified operation and return the result.
-	return operation()
-}
-
 func main() {
-	// Read numbers from the input CSV file.
-	numbers, err := readNumbersFromCSV("random_numbers.csv")
+	numbers, err := readNumbersFromCSV("numbers.csv")
 	if err != nil {
 		log.Fatalf("Error reading numbers: %v", err)
 	}
 
 	start := time.Now()
-	sortedNumbers := timeTrack(start, "Sorting", func() []int {
-		return RunMergeSort(numbers)
-	})
 
-	// Print the original and sorted numbers.
+	sortedNumbers := RunMergeSort(numbers)
+
+	elapsed := time.Since(start)
 	//fmt.Printf("Original numbers: %v\n", numbers)
 	//fmt.Printf("Sorted numbers  : %v\n", sortedNumbers)
+	fmt.Printf("MergeSort took %s\n", elapsed)
 
-	// Write the sorted numbers to the output CSV file. Change the filename to yours.
-	err = writeNumbersToCSV("out1m.csv", sortedNumbers)
+	err = writeNumbersToCSV("out.csv", sortedNumbers)
 	if err != nil {
 		log.Fatalf("Error writing numbers: %v", err)
 	}
+
+	if isSorted(sortedNumbers) {
+		fmt.Println("The numbers are sorted correctly")
+	} else {
+		fmt.Println("The numbers are not sorted correctly")
+	}
 }
 
-// readNumbersFromCSV reads integers from a CSV file and returns them as a slice.
 func readNumbersFromCSV(filename string) ([]int, error) {
-	// Open the input CSV file.
+
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	// Create a new CSV reader.
 	reader := csv.NewReader(file)
 
-	// Read the numbers from the CSV file and store them in a slice.
 	var numbers []int
 	for {
 		record, err := reader.Read()
@@ -150,20 +142,16 @@ func readNumbersFromCSV(filename string) ([]int, error) {
 	return numbers, nil
 }
 
-// writeNumbersToCSV writes a slice of integers to a CSV file.
 func writeNumbersToCSV(filename string, numbers []int) error {
-	// Create the output file.
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	// Create a new CSV writer.
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
-	// Write the numbers to the CSV file.
 	for _, number := range numbers {
 		err := writer.Write([]string{strconv.Itoa(number)})
 		if err != nil {
@@ -172,4 +160,13 @@ func writeNumbersToCSV(filename string, numbers []int) error {
 	}
 
 	return nil
+}
+func isSorted(numbers []int) bool {
+	for i := 1; i < len(numbers); i++ {
+		if numbers[i-1] > numbers[i] {
+			return false
+		}
+	}
+	return true
+
 }
